@@ -22,6 +22,18 @@ class UltimateProtection {
             detectDevTools: true,           // 检测开发者工具
             obfuscateCode: false,           // 代码混淆（可选）
             
+            // 🎨 水印配置
+            watermark: {
+                enabled: true,              // 启用水印
+                text: '网页保护系统11 - 127.0.0.1',  // 水印文本
+                opacity: 0.5,              // 透明度
+                fontSize: '16px',          // 字体大小
+                color: '#999',             // 文字颜色
+                spacing: 250,              // 水印间距
+                angle: -45,                // 旋转角度
+                zIndex: 1000              // 层级
+            },
+            
             // 性能优化
             throttleInterval: 1000,         // 检测间隔（毫秒）
             maxRetries: 3,                  // 最大重试次数
@@ -44,7 +56,7 @@ class UltimateProtection {
     init() {
         if (this.isActive) return;
         
-        console.log('🛡️ 启动网页保护系统...');
+        console.log('🛑️ 启动网页保护系统...');
         
         // 基础保护
         if (this.config.disableRightClick) this.disableRightClick();
@@ -56,6 +68,9 @@ class UltimateProtection {
         
         // 内容保护
         this.protectContent();
+        
+        // 🎨 创建水印
+        this.initWatermark();
         
         this.isActive = true;
         console.log('✅ 保护系统启动完成');
@@ -266,6 +281,120 @@ class UltimateProtection {
             e.preventDefault();
             return false;
         });
+    }
+
+    /**
+     * 🎨 初始化水印系统（统一配置优先级）
+     */
+    initWatermark() {
+        // 优先级顺序：
+        // 1. 外部配置文件 (protection-config.js)
+        // 2. 内部默认配置 (ultimate-protection.js)
+        
+        let watermarkConfig = this.config.watermark; // 默认配置
+        
+        // 检查是否有外部配置（从 protection-config.js）
+        if (window.ProtectionConfig && window.ProtectionConfig.advanced && window.ProtectionConfig.advanced.watermark) {
+            const externalConfig = window.ProtectionConfig.advanced.watermark;
+            console.log('🔄 使用外部水印配置（protection-config.js）');
+            
+            // 合并配置，外部配置优先
+            watermarkConfig = {
+                enabled: externalConfig.enabled !== undefined ? externalConfig.enabled : watermarkConfig.enabled,
+                text: externalConfig.content || externalConfig.text || watermarkConfig.text,
+                opacity: externalConfig.opacity !== undefined ? externalConfig.opacity : watermarkConfig.opacity,
+                fontSize: watermarkConfig.fontSize,
+                color: watermarkConfig.color,
+                spacing: watermarkConfig.spacing,
+                angle: watermarkConfig.angle,
+                zIndex: externalConfig.zIndex || watermarkConfig.zIndex
+            };
+        } else {
+            console.log('🔧 使用内部默认水印配置（ultimate-protection.js）');
+        }
+        
+        // 检查是否启用水印
+        if (watermarkConfig.enabled) {
+            console.log('🎨 水印已启用，开始创建...');
+            console.log('📊 水印配置：', watermarkConfig);
+            this.createWatermark(watermarkConfig);
+        } else {
+            console.log('❌ 水印已禁用，跳过创建');
+        }
+    }
+
+    /**
+     * 🎨 创建动态水印
+     */
+    createWatermark(config = this.config.watermark) {
+        console.log('🎨 正在创建动态水印...');
+        
+        // 使用传入的配置参数
+        
+        // 创建水印容器
+        const watermarkContainer = document.createElement('div');
+        watermarkContainer.id = 'ultimate-protection-watermark';
+        watermarkContainer.style.cssText = `
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            pointer-events: none;
+            z-index: ${config.zIndex};
+            overflow: hidden;
+            user-select: none;
+            -webkit-user-select: none;
+        `;
+        
+        // 创建多个水印文本元素
+        const rows = Math.ceil(window.innerHeight / config.spacing) + 2;
+        const cols = Math.ceil(window.innerWidth / config.spacing) + 2;
+        
+        for (let i = 0; i < rows; i++) {
+            for (let j = 0; j < cols; j++) {
+                const watermarkElement = document.createElement('div');
+                watermarkElement.textContent = config.text;
+                watermarkElement.style.cssText = `
+                    position: absolute;
+                    top: ${i * config.spacing - 50}px;
+                    left: ${j * config.spacing - 50}px;
+                    transform: rotate(${config.angle}deg);
+                    opacity: ${config.opacity};
+                    color: ${config.color};
+                    font-size: ${config.fontSize};
+                    font-family: Arial, sans-serif;
+                    white-space: nowrap;
+                    user-select: none;
+                    -webkit-user-select: none;
+                    pointer-events: none;
+                `;
+                watermarkContainer.appendChild(watermarkElement);
+            }
+        }
+        
+        // 添加到页面
+        document.body.appendChild(watermarkContainer);
+        
+        // 防删除机制：有2秒检查一次
+        setInterval(() => {
+            const existingWatermark = document.getElementById('ultimate-protection-watermark');
+            if (!existingWatermark) {
+                console.log('🔄 检测到水印被删除，重新创建...');
+                this.createWatermark(config);
+            }
+        }, 2000);
+        
+        // 监听窗口大小变化，重新创建水印
+        window.addEventListener('resize', () => {
+            const existingWatermark = document.getElementById('ultimate-protection-watermark');
+            if (existingWatermark) {
+                existingWatermark.remove();
+            }
+            setTimeout(() => this.createWatermark(config), 100);
+        });
+        
+        console.log('✅ 动态水印创建成功');
     }
 
     /**

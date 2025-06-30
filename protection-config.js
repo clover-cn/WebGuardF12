@@ -117,7 +117,7 @@ const ProtectionConfig = {
             enabled: true,
             type: 'text', // text | image
             content: '自定义名称 - 127.0.0.1',
-            opacity: 0.1,
+            opacity: 0.4,
             position: 'repeat', // fixed | repeat
             zIndex: 1000
         },
@@ -188,45 +188,8 @@ function getCurrentPageConfig() {
     };
 }
 
-/**
- * 🎨 创建水印
- */
-function createWatermark(config) {
-    if (!config.watermark?.enabled) return;
-
-    const watermark = document.createElement('div');
-    watermark.style.cssText = `
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        pointer-events: none;
-        z-index: ${config.advanced.watermark.zIndex};
-        opacity: ${config.advanced.watermark.opacity};
-        background-image: repeating-linear-gradient(
-            -45deg,
-            transparent,
-            transparent 100px,
-            rgba(0,0,0,0.1) 100px,
-            rgba(0,0,0,0.1) 200px
-        );
-        font-family: Arial, sans-serif;
-        font-size: 16px;
-        color: #999;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        transform: rotate(-45deg);
-    `;
-    
-    // 创建重复的水印文本
-    const watermarkText = config.advanced.watermark.content;
-    const repeatedText = Array(50).fill(watermarkText).join('   ');
-    watermark.textContent = repeatedText;
-    
-    document.body.appendChild(watermark);
-}
+// 水印功能现在由 ultimate-protection.js 统一管理
+// 此函数已移动到主保护系统中，并支持配置优先级
 
 /**
  * 🚀 智能保护系统启动器
@@ -251,18 +214,16 @@ function initSmartProtection() {
         }
     }
 
-    // 创建水印
-    createWatermark(config);
-
-    // 启动保护系统
+    // 启动保护系统（水印功能包含在其中）
     if (window.UltimateProtection) {
         // 应用配置
         Object.assign(window.UltimateProtection.config, config);
         
-        // 启动保护
+        // 启动保护（会自动处理水印）
         window.UltimateProtection.init();
         
         console.log(`🛡️ 智能保护系统已启动 - 级别: ${config.level}`);
+        console.log(`🎨 水印配置: 启用=${config.advanced.watermark.enabled}, 内容="${config.advanced.watermark.content}"`);
     } else {
         console.error('❌ 保护系统核心文件未加载');
     }
