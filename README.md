@@ -8,6 +8,8 @@ WebGuardF12 provides a comprehensive suite of tools to deter casual piracy and p
 ![License](https://img.shields.io/badge/license-MIT-green)
 ![Version](https://img.shields.io/badge/version-1.0.0-orange)
 
+**🇺🇸 English | [🇨🇳 中文](README_zh.md)**
+
 ---
 
 ## ✨ Key Features

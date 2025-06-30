@@ -1,0 +1,185 @@
+name: Deploy Documentation
+
+on:
+  push:
+    branches: [ main, master ]
+    paths:
+      - 'README*.md'
+      - 'docs/**'
+      - '.github/workflows/docs.yml'
+  pull_request:
+    branches: [ main, master ]
+    paths:
+      - 'README*.md'
+      - 'docs/**'
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: "pages"
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        
+      - name: Setup Pages
+        uses: actions/configure-pages@v4
+        
+      - name: Create docs structure
+        run: |
+          mkdir -p docs/en docs/zh
+          cp README.md docs/en/index.md
+          cp README_zh.md docs/zh/index.md
+          
+          # Create index.html with language selector
+          cat > docs/index.html << 'EOF'
+          <!DOCTYPE html>
+          <html>
+          <head>
+              <meta charset="UTF-8">
+              <meta name="viewport" content="width=device-width, initial-scale=1.0">
+              <title>WebGuardF12 Documentation</title>
+              <style>
+                  body { 
+                      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+                      margin: 0; padding: 50px; background: #f6f8fa; 
+                  }
+                  .container { 
+                      max-width: 600px; margin: 0 auto; background: white;
+                      padding: 50px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+                      text-align: center;
+                  }
+                  h1 { color: #24292f; margin-bottom: 20px; }
+                  p { color: #656d76; margin-bottom: 40px; line-height: 1.6; }
+                  .language-selector { display: flex; gap: 20px; justify-content: center; }
+                  .lang-btn {
+                      display: flex; align-items: center; gap: 10px; padding: 15px 30px;
+                      background: #0969da; color: white; text-decoration: none;
+                      border-radius: 8px; font-weight: 500; transition: all 0.2s;
+                  }
+                  .lang-btn:hover { background: #0860ca; transform: translateY(-2px); }
+                  .flag { font-size: 24px; }
+              </style>
+          </head>
+          <body>
+              <div class="container">
+                  <h1>🛡️ WebGuardF12 Documentation</h1>
+                  <p>Choose your preferred language to view the documentation</p>
+                  <div class="language-selector">
+                      <a href="en/" class="lang-btn">
+                          <span class="flag">🇺🇸</span>
+                          <span>English</span>
+                      </a>
+                      <a href="zh/" class="lang-btn">
+                          <span class="flag">🇨🇳</span>
+                          <span>中文</span>
+                      </a>
+                  </div>
+              </div>
+              <script>
+                  // Auto-redirect based on browser language
+                  const lang = navigator.language.toLowerCase();
+                  if (lang.startsWith('zh')) {
+                      setTimeout(() => window.location.href = 'zh/', 2000);
+                  } else {
+                      setTimeout(() => window.location.href = 'en/', 2000);
+                  }
+              </script>
+          </body>
+          </html>
+          EOF
+          
+          # Create language-specific index pages
+          cat > docs/en/index.html << 'EOF'
+          <!DOCTYPE html>
+          <html>
+          <head>
+              <meta charset="UTF-8">
+              <meta name="viewport" content="width=device-width, initial-scale=1.0">
+              <title>WebGuardF12 - English Documentation</title>
+              <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/github-markdown-css/5.4.0/github-markdown-light.min.css">
+              <style>
+                  body { margin: 0; padding: 20px; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
+                  .container { max-width: 980px; margin: 0 auto; }
+                  .lang-switch { text-align: right; margin-bottom: 20px; }
+                  .lang-switch a { color: #0969da; text-decoration: none; }
+                  .markdown-body { box-sizing: border-box; min-width: 200px; max-width: 980px; margin: 0 auto; padding: 45px; }
+              </style>
+          </head>
+          <body>
+              <div class="container">
+                  <div class="lang-switch">
+                      <a href="../zh/">🇨🇳 中文版本</a> | <a href="../">🏠 Home</a>
+                  </div>
+                  <div class="markdown-body" id="content">Loading...</div>
+              </div>
+              <script>
+                  fetch('index.md')
+                      .then(response => response.text())
+                      .then(text => {
+                          document.getElementById('content').innerHTML = 
+                              '<pre>' + text.replace(/</g, '&lt;').replace(/>/g, '&gt;') + '</pre>';
+                      });
+              </script>
+          </body>
+          </html>
+          EOF
+          
+          cat > docs/zh/index.html << 'EOF'
+          <!DOCTYPE html>
+          <html>
+          <head>
+              <meta charset="UTF-8">
+              <meta name="viewport" content="width=device-width, initial-scale=1.0">
+              <title>WebGuardF12 - 中文文档</title>
+              <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/github-markdown-css/5.4.0/github-markdown-light.min.css">
+              <style>
+                  body { margin: 0; padding: 20px; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
+                  .container { max-width: 980px; margin: 0 auto; }
+                  .lang-switch { text-align: right; margin-bottom: 20px; }
+                  .lang-switch a { color: #0969da; text-decoration: none; }
+                  .markdown-body { box-sizing: border-box; min-width: 200px; max-width: 980px; margin: 0 auto; padding: 45px; }
+              </style>
+          </head>
+          <body>
+              <div class="container">
+                  <div class="lang-switch">
+                      <a href="../en/">🇺🇸 English Version</a> | <a href="../">🏠 首页</a>
+                  </div>
+                  <div class="markdown-body" id="content">加载中...</div>
+              </div>
+              <script>
+                  fetch('index.md')
+                      .then(response => response.text())
+                      .then(text => {
+                          document.getElementById('content').innerHTML = 
+                              '<pre>' + text.replace(/</g, '&lt;').replace(/>/g, '&gt;') + '</pre>';
+                      });
+              </script>
+          </body>
+          </html>
+          EOF
+          
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: ./docs
+
+  deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    needs: build
+    if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master'
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
