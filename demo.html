@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>网页保护系统</title>
+    <style>
+        body {
+            font-family: 'Microsoft YaHei', Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+        }
+
+        h1 {
+            color: #333;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .config-section {
+            margin-bottom: 30px;
+            padding: 20px;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            background: #f9f9f9;
+        }
+
+        .config-option {
+            margin-bottom: 15px;
+        }
+
+        .config-option label {
+            font-weight: bold;
+            color: #555;
+            margin-right: 10px;
+        }
+
+        .config-option input[type="radio"] {
+            margin-right: 5px;
+        }
+
+        .config-option input[type="text"] {
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            width: 300px;
+            margin-left: 10px;
+        }
+
+        .btn {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 16px;
+            margin-right: 10px;
+            margin-bottom: 10px;
+            transition: background 0.3s;
+        }
+
+        .btn:hover {
+            background: #5a6fd8;
+        }
+
+        .btn-danger {
+            background: #ff4757;
+        }
+
+        .btn-danger:hover {
+            background: #ff3838;
+        }
+
+        .status {
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 20px;
+            font-weight: bold;
+        }
+
+        .status.info {
+            background: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+        }
+
+        .instructions {
+            background: #fff3cd;
+            color: #856404;
+            border: 1px solid #ffeaa7;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <h1>🛡️ 网页保护系统 - F12检测配置</h1>
+
+        <div class="instructions">
+            <h3>📋 使用说明：</h3>
+            <ul>
+                <li>选择F12检测后的行为（警告或重定向）</li>
+                <li>如果选择重定向，可以自定义目标URL</li>
+                <li>点击"应用配置"保存设置</li>
+                <li>按F12测试保护效果</li>
+            </ul>
+        </div>
+    </div>
+
+    <!-- 先加载配置文件 -->
+    <script src="protection-config.js"></script>
+    <!-- 再加载保护系统 -->
+    <script src="ultimate-protection.js"></script>
+
+    <script>
+        // 页面配置控制脚本
+        function applyConfig() {
+            const f12Action = document.querySelector('input[name="f12Action"]:checked').value;
+            const redirectUrl = document.getElementById('redirectUrl').value;
+
+            // 更新全局配置
+            if (window.ProtectionConfig) {
+                window.ProtectionConfig.detection.devTools.f12Action = f12Action;
+                window.ProtectionConfig.detection.devTools.redirectUrl = redirectUrl;
+            }
+
+            // 更新保护系统配置
+            if (window.UltimateProtection) {
+                window.UltimateProtection.config.f12Action = f12Action;
+                window.UltimateProtection.config.redirectUrl = redirectUrl;
+            }
+
+            // 更新状态显示
+            const statusEl = document.getElementById('status');
+            let statusText = '';
+            switch (f12Action) {
+                case 'warning':
+                    statusText = 'F12检测后显示警告消息';
+                    break;
+                case 'redirect':
+                    statusText = `F12检测后重定向到：${redirectUrl}`;
+                    break;
+                case 'destroy':
+                    statusText = 'F12检测后销毁页面（极端模式）';
+                    break;
+            }
+            statusEl.innerHTML = `<strong>✅ 配置已应用：</strong> ${statusText}`;
+
+            console.log('🎯 配置已更新：', { f12Action, redirectUrl });
+        }
+
+        function testProtection() {
+            if (window.UltimateProtection) {
+                console.log('🧪 模拟F12检测...');
+                window.UltimateProtection.handleDevToolsDetected();
+            }
+        }
+
+        function resetConfig() {
+            document.getElementById('redirect').checked = true;
+            document.getElementById('redirectUrl').value = 'https://www.baidu.com';
+            applyConfig();
+        }
+
+        // 监听配置变化
+        document.querySelectorAll('input[name="f12Action"]').forEach(radio => {
+            radio.addEventListener('change', function () {
+                const redirectUrlInput = document.getElementById('redirectUrl');
+                redirectUrlInput.disabled = this.value !== 'redirect';
+            });
+        });
+
+        // 初始化配置
+        document.addEventListener('DOMContentLoaded', function () {
+            // 初始状态
+            const redirectUrlInput = document.getElementById('redirectUrl');
+            const selectedAction = document.querySelector('input[name="f12Action"]:checked').value;
+            redirectUrlInput.disabled = selectedAction !== 'redirect';
+
+            console.log('🛡️ 保护系统配置页面已加载');
+            console.log('📋 当前可用的配置选项：');
+            console.log('  - warning: 显示警告消息');
+            console.log('  - redirect: 重定向到指定URL');
+            console.log('  - destroy: 销毁页面');
+        });
+    </script>
+</body>
+
+</html>
